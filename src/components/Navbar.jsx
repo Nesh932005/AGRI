@@ -17,8 +17,8 @@ export function Navbar({ currentTab, onOpenMobileSidebar, onDataRefreshed, setCu
   const navigate = useNavigate();
 
   const handleResetData = () => {
-    if (window.confirm('Reset all farmers, crops, inventory and transactions to default sample data?')) {
-      dataStore.resetToDefaults();
+    if (window.confirm('Clear all farmers, crops, and purchase records to have a completely clean database?')) {
+      dataStore.clearAllFarmers();
       if (onDataRefreshed) onDataRefreshed();
     }
   };

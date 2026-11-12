@@ -22,7 +22,7 @@ export function Sidebar({ currentTab, setCurrentTab, isMobileOpen, setIsMobileOp
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'farmers', label: 'Farmers', icon: Users, badge: '5' },
+    { id: 'farmers', label: 'Farmers', icon: Users },
     { id: 'crops', label: 'Crop Monitoring', icon: Sprout },
     { id: 'inventory', label: 'Inventory', icon: Boxes },
     { id: 'purchasing', label: 'Crop Purchasing', icon: ShoppingBag },

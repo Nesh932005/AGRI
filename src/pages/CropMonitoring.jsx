@@ -33,18 +33,18 @@ export function CropMonitoring({ onNavigateToPurchase }) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState(null);
 
-  // Add Form Data with exact typeable Barangay and Municipality
+  // Add Form Data with 100% clean, clear fields
   const [formData, setFormData] = useState({
     farmer_id: '',
     category: 'Rice',
     variety: '',
     barangay: '',
-    municipality: 'San Jose',
-    area_ha: '2.0',
+    municipality: '',
+    area_ha: '',
     planting_date: new Date().toISOString().split('T')[0],
     expected_harvest_date: '',
     growth_stage: 'Vegetative',
-    estimated_yield_kg: '8000',
+    estimated_yield_kg: '',
     health_status: 'Healthy',
     notes: ''
   });
@@ -62,7 +62,7 @@ export function CropMonitoring({ onNavigateToPurchase }) {
         ...prev, 
         farmer_id: f[0].id,
         barangay: f[0].barangay || '',
-        municipality: f[0].municipality || 'San Jose'
+        municipality: f[0].municipality || ''
       }));
     }
     setLoading(false);
@@ -78,28 +78,24 @@ export function CropMonitoring({ onNavigateToPurchase }) {
       ...prev,
       farmer_id: farmerId,
       barangay: f?.barangay || '',
-      municipality: f?.municipality || 'San Jose'
+      municipality: f?.municipality || ''
     }));
   };
 
   const handleOpenAdd = () => {
-    const today = new Date();
-    const harvestDate = new Date();
-    harvestDate.setDate(today.getDate() + 105);
-
     const firstFarmer = farmers[0];
 
     setFormData({
       farmer_id: firstFarmer?.id || '',
       category: 'Rice',
-      variety: 'NSIC Rc222 (Tubigan 18)',
+      variety: '',
       barangay: firstFarmer?.barangay || '',
-      municipality: firstFarmer?.municipality || 'San Jose',
-      area_ha: '2.5',
-      planting_date: today.toISOString().split('T')[0],
-      expected_harvest_date: harvestDate.toISOString().split('T')[0],
+      municipality: firstFarmer?.municipality || '',
+      area_ha: '',
+      planting_date: new Date().toISOString().split('T')[0],
+      expected_harvest_date: '',
       growth_stage: 'Vegetative',
-      estimated_yield_kg: '10000',
+      estimated_yield_kg: '',
       health_status: 'Healthy',
       notes: ''
     });

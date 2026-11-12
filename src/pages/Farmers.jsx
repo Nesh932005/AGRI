@@ -9,13 +9,15 @@ import {
   Trash2, 
   Phone, 
   MapPin, 
-  Wheat,
-  CheckCircle,
-  Eye,
-  Building2,
-  AlertCircle
+  Wheat, 
+  CheckCircle, 
+  Eye, 
+  Building2, 
+  AlertCircle,
+  Eraser
 } from 'lucide-react';
 import { farmerService } from '../services/farmerService';
+import { dataStore } from '../services/dataStorage';
 import { Badge } from '../components/Badge';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../hooks/useAuth';
@@ -34,14 +36,14 @@ export function Farmers() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedFarmer, setSelectedFarmer] = useState(null);
 
-  // Form State
+  // Completely CLEAR form state - no prefilled values
   const [formData, setFormData] = useState({
     name: '',
     contact: '',
     barangay: '',
     municipality: '',
-    farm_size_ha: '2.5',
-    primary_crops: ['Rice'],
+    farm_size_ha: '',
+    primary_crops: [],
     status: 'active'
   });
 
@@ -58,14 +60,15 @@ export function Farmers() {
     loadFarmers();
   }, []);
 
+  // Opens completely BLANK form
   const handleOpenAdd = () => {
     setFormData({
       name: '',
       contact: '',
       barangay: '',
-      municipality: 'San Jose',
-      farm_size_ha: '2.0',
-      primary_crops: ['Rice'],
+      municipality: '',
+      farm_size_ha: '',
+      primary_crops: [],
       status: 'active'
     });
     setIsAddModalOpen(true);
@@ -74,12 +77,12 @@ export function Farmers() {
   const handleOpenEdit = (farmer) => {
     setSelectedFarmer(farmer);
     setFormData({
-      name: farmer.name,
-      contact: farmer.contact,
+      name: farmer.name || '',
+      contact: farmer.contact || '',
       barangay: farmer.barangay || '',
-      municipality: farmer.municipality || 'San Jose',
-      farm_size_ha: String(farmer.farm_size_ha),
-      primary_crops: farmer.primary_crops || ['Rice'],
+      municipality: farmer.municipality || '',
+      farm_size_ha: farmer.farm_size_ha ? String(farmer.farm_size_ha) : '',
+      primary_crops: farmer.primary_crops || [],
       status: farmer.status || 'active'
     });
     setIsEditModalOpen(true);
@@ -92,6 +95,7 @@ export function Farmers() {
 
   const handleSaveAdd = async (e) => {
     e.preventDefault();
+    if (!formData.name.trim()) return;
     await farmerService.addFarmer(formData);
     setIsAddModalOpen(false);
     loadFarmers();
@@ -112,15 +116,20 @@ export function Farmers() {
     }
   };
 
+  const handleClearAllFarmers = () => {
+    if (window.confirm('Remove all registered farmers and start with a completely empty directory?')) {
+      dataStore.clearAllFarmers();
+      loadFarmers();
+    }
+  };
+
   const handleCropToggle = (crop) => {
     const exists = formData.primary_crops.includes(crop);
     if (exists) {
-      if (formData.primary_crops.length > 1) {
-        setFormData({
-          ...formData,
-          primary_crops: formData.primary_crops.filter(c => c !== crop)
-        });
-      }
+      setFormData({
+        ...formData,
+        primary_crops: formData.primary_crops.filter(c => c !== crop)
+      });
     } else {
       setFormData({
         ...formData,
@@ -132,8 +141,8 @@ export function Farmers() {
   // Filtered farmers
   const filteredFarmers = farmers.filter(f => {
     const q = search.toLowerCase();
-    const matchSearch = f.name.toLowerCase().includes(q) ||
-                        f.farmer_code.toLowerCase().includes(q) ||
+    const matchSearch = (f.name && f.name.toLowerCase().includes(q)) ||
+                        (f.farmer_code && f.farmer_code.toLowerCase().includes(q)) ||
                         (f.barangay && f.barangay.toLowerCase().includes(q)) ||
                         (f.municipality && f.municipality.toLowerCase().includes(q));
     const matchCrop = selectedCropFilter === 'All' || f.primary_crops?.includes(selectedCropFilter);
@@ -180,7 +189,18 @@ export function Farmers() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {farmers.length > 0 && (
+            <button
+              onClick={handleClearAllFarmers}
+              title="Remove all test farmers to have a completely clean directory"
+              className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
+            >
+              <Eraser className="w-3.5 h-3.5" />
+              <span>Clear All Farmers</span>
+            </button>
+          )}
+
           <button
             onClick={exportCSV}
             className="px-3.5 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold flex items-center gap-2 transition shadow-xs"
@@ -188,6 +208,7 @@ export function Farmers() {
             <Download className="w-4 h-4 text-slate-500" />
             Export CSV
           </button>
+
           <button
             onClick={handleOpenAdd}
             className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold flex items-center gap-2 transition shadow-sm shadow-emerald-800/20"
@@ -243,7 +264,7 @@ export function Farmers() {
 
         {/* Quick Tag Counts */}
         <div className="flex items-center gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <span className="font-semibold text-slate-700">{filteredFarmers.length}</span> farmers found matching location criteria
+          <span className="font-semibold text-slate-700">{filteredFarmers.length}</span> farmers registered
         </div>
       </div>
 
@@ -265,8 +286,10 @@ export function Farmers() {
             <tbody className="divide-y divide-slate-100 bg-white">
               {filteredFarmers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500 text-sm">
-                    No farmers found matching criteria.
+                  <td colSpan={7} className="px-6 py-16 text-center text-slate-500 text-sm">
+                    <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="font-semibold text-slate-700">No farmers registered yet.</p>
+                    <p className="text-xs text-slate-400 mt-1">Click "Register Farmer" above to add your first farmer with a clean form.</p>
                   </td>
                 </tr>
               ) : (
@@ -288,10 +311,10 @@ export function Farmers() {
                       <div className="text-xs space-y-0.5">
                         <div className="flex items-center gap-1.5 font-semibold text-slate-900">
                           <MapPin className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                          <span>Brgy. {farmer.barangay || 'Poblacion'}</span>
+                          <span>Brgy. {farmer.barangay || 'N/A'}</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-slate-500 pl-5">
-                          <span>{farmer.municipality || 'Municipal Agriculture Office'}</span>
+                          <span>{farmer.municipality || 'N/A'}</span>
                         </div>
                       </div>
                     </td>
@@ -299,22 +322,26 @@ export function Farmers() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5 text-slate-700 font-medium text-xs">
                         <Phone className="w-3 h-3 text-slate-400" />
-                        <span>{farmer.contact}</span>
+                        <span>{farmer.contact || 'N/A'}</span>
                       </div>
                     </td>
 
                     <td className="px-5 py-4">
-                      <span className="font-semibold text-slate-800 text-sm">{farmer.farm_size_ha}</span>
+                      <span className="font-semibold text-slate-800 text-sm">{farmer.farm_size_ha || 0}</span>
                       <span className="text-xs text-slate-500 ml-1">hectares</span>
                     </td>
 
                     <td className="px-5 py-4">
                       <div className="flex flex-wrap gap-1">
-                        {farmer.primary_crops?.map((crop) => (
-                          <Badge key={crop} variant={crop} size="sm">
-                            {crop}
-                          </Badge>
-                        ))}
+                        {farmer.primary_crops && farmer.primary_crops.length > 0 ? (
+                          farmer.primary_crops.map((crop) => (
+                            <Badge key={crop} variant={crop} size="sm">
+                              {crop}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">None specified</span>
+                        )}
                       </div>
                     </td>
 
@@ -359,7 +386,7 @@ export function Farmers() {
         </div>
       </div>
 
-      {/* ADD FARMER MODAL */}
+      {/* ADD FARMER MODAL - 100% CLEAR FORM */}
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -375,23 +402,23 @@ export function Farmers() {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g. Juan Batumbakal"
-              className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Enter farmer full name"
+              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Contact Phone *
+                Contact Phone Number *
               </label>
               <input
                 type="text"
                 required
                 value={formData.contact}
                 onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                placeholder="0917-000-0000"
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter mobile number"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
             <div>
@@ -405,12 +432,13 @@ export function Farmers() {
                 required
                 value={formData.farm_size_ha}
                 onChange={(e) => setFormData({ ...formData, farm_size_ha: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="e.g. 2.5"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
 
-          {/* EXACT BARANGAY & MUNICIPALITY TEXT INPUTS */}
+          {/* EXACT BARANGAY & MUNICIPALITY TEXT INPUTS - CLEAR */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
@@ -421,8 +449,8 @@ export function Farmers() {
                 required
                 value={formData.barangay}
                 onChange={(e) => setFormData({ ...formData, barangay: e.target.value })}
-                placeholder="Type exact barangay (e.g. San Isidro, Poblacion)"
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter exact barangay"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
             <div>
@@ -434,8 +462,8 @@ export function Farmers() {
                 required
                 value={formData.municipality}
                 onChange={(e) => setFormData({ ...formData, municipality: e.target.value })}
-                placeholder="Type municipality (e.g. San Jose, Solano)"
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter municipality / city"
+                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -447,7 +475,7 @@ export function Farmers() {
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -557,7 +585,6 @@ export function Farmers() {
                 required
                 value={formData.barangay}
                 onChange={(e) => setFormData({ ...formData, barangay: e.target.value })}
-                placeholder="Type exact barangay"
                 className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
@@ -570,7 +597,6 @@ export function Farmers() {
                 required
                 value={formData.municipality}
                 onChange={(e) => setFormData({ ...formData, municipality: e.target.value })}
-                placeholder="Type municipality"
                 className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
@@ -644,7 +670,7 @@ export function Farmers() {
           <div className="space-y-5">
             <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
               <div className="w-14 h-14 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-bold text-xl shadow-md">
-                {selectedFarmer.name.charAt(0)}
+                {selectedFarmer.name ? selectedFarmer.name.charAt(0) : 'F'}
               </div>
               <div>
                 <h3 className="text-lg font-bold text-slate-900">{selectedFarmer.name}</h3>
@@ -658,30 +684,34 @@ export function Farmers() {
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-400 block mb-0.5">Exact Barangay</span>
-                <span className="font-semibold text-slate-900">Brgy. {selectedFarmer.barangay || 'San Isidro'}</span>
+                <span className="font-semibold text-slate-900">{selectedFarmer.barangay || 'N/A'}</span>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-400 block mb-0.5">Municipality</span>
-                <span className="font-semibold text-slate-900">{selectedFarmer.municipality || 'San Jose'}</span>
+                <span className="font-semibold text-slate-900">{selectedFarmer.municipality || 'N/A'}</span>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-400 block mb-0.5">Contact Number</span>
-                <span className="font-semibold text-slate-800">{selectedFarmer.contact}</span>
+                <span className="font-semibold text-slate-800">{selectedFarmer.contact || 'N/A'}</span>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-400 block mb-0.5">Total Farm Size</span>
-                <span className="font-semibold text-slate-800">{selectedFarmer.farm_size_ha} Hectares</span>
+                <span className="font-semibold text-slate-800">{selectedFarmer.farm_size_ha || 0} Hectares</span>
               </div>
             </div>
 
             <div>
               <span className="text-xs font-semibold text-slate-700 block mb-2">Registered Crop Types:</span>
               <div className="flex flex-wrap gap-1.5">
-                {selectedFarmer.primary_crops?.map(c => (
-                  <Badge key={c} variant={c} size="md">
-                    {c}
-                  </Badge>
-                ))}
+                {selectedFarmer.primary_crops && selectedFarmer.primary_crops.length > 0 ? (
+                  selectedFarmer.primary_crops.map(c => (
+                    <Badge key={c} variant={c} size="md">
+                      {c}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-xs text-slate-400 italic">No crops registered yet</span>
+                )}
               </div>
             </div>
 

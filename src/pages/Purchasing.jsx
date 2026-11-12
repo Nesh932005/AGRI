@@ -30,14 +30,14 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
   const [receiptData, setReceiptData] = useState(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
-  // Form
+  // Form - clean clear state
   const [formData, setFormData] = useState({
     farmer_id: '',
     crop_id: '',
     category: 'Rice',
-    variety: 'NSIC Rc222 (Tubigan 18)',
-    quantity_kg: '1000',
-    price_per_kg: '22.00',
+    variety: '',
+    quantity_kg: '',
+    price_per_kg: '',
     payment_status: 'Paid',
     payment_method: 'Cash',
     storage_location: 'Central Silo 1',
@@ -62,8 +62,8 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
         crop_id: prefilledCrop.id || '',
         category: prefilledCrop.category || 'Rice',
         variety: prefilledCrop.variety || '',
-        quantity_kg: String(prefilledCrop.actual_yield_kg || prefilledCrop.estimated_yield_kg || 1000),
-        price_per_kg: prefilledCrop.category === 'Rice' ? '22.00' : prefilledCrop.category === 'Corn' ? '18.00' : '45.00',
+        quantity_kg: String(prefilledCrop.actual_yield_kg || prefilledCrop.estimated_yield_kg || ''),
+        price_per_kg: '',
         payment_status: 'Paid',
         payment_method: 'LandBank',
         storage_location: 'Central Silo 1',
@@ -88,9 +88,9 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
       farmer_id: farmers[0]?.id || '',
       crop_id: '',
       category: 'Rice',
-      variety: 'NSIC Rc222 (Tubigan 18)',
-      quantity_kg: '1500',
-      price_per_kg: '22.50',
+      variety: '',
+      quantity_kg: '',
+      price_per_kg: '',
       payment_status: 'Paid',
       payment_method: 'Cash',
       storage_location: 'Central Silo 1',

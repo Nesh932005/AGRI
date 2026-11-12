@@ -19,29 +19,35 @@ export function FarmerLogin() {
   const navigate = useNavigate();
 
   const [mode, setMode] = useState('login'); // 'login' or 'register'
-  const [codeOrPhone, setCodeOrPhone] = useState('FMR-2026-001');
+  
+  // 100% CLEAR form state
+  const [codeOrPhone, setCodeOrPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Self-registration form state for new farmers with exact typeable Barangay & Municipality
+  // Self-registration form state for new farmers with completely empty fields
   const [regData, setRegData] = useState({
     name: '',
     contact: '',
     barangay: '',
-    municipality: 'San Jose',
-    farm_size_ha: '2.5',
-    primary_crops: ['Rice']
+    municipality: '',
+    farm_size_ha: '',
+    primary_crops: []
   });
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (!codeOrPhone.trim()) {
+      setError('Please enter your Farmer Code or Phone Number.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      await loginFarmer(codeOrPhone);
+      await loginFarmer(codeOrPhone.trim());
       navigate('/farmer/dashboard');
     } catch (err) {
-      setError(err.message || 'Farmer record not found');
+      setError(err.message || 'Farmer record not found. If you are new, please register below.');
     } finally {
       setLoading(false);
     }
@@ -49,6 +55,10 @@ export function FarmerLogin() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (!regData.name.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -58,20 +68,6 @@ export function FarmerLogin() {
       navigate('/farmer/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to register farmer');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickDemo = async (code) => {
-    setCodeOrPhone(code);
-    setError('');
-    setLoading(true);
-    try {
-      await loginFarmer(code);
-      navigate('/farmer/dashboard');
-    } catch (err) {
-      setError(err.message || 'Demo login failed');
     } finally {
       setLoading(false);
     }
@@ -93,7 +89,7 @@ export function FarmerLogin() {
           Farmer Connect Portal
         </h1>
         <p className="mt-1 text-xs sm:text-sm font-medium text-emerald-200">
-          Municipal Agriculture Office — Beneficiary & Field Services
+          Municipal Agriculture Office — Beneficiary Services
         </p>
       </div>
 
@@ -127,7 +123,7 @@ export function FarmerLogin() {
             </div>
           )}
 
-          {/* SIGN IN FORM */}
+          {/* SIGN IN FORM - 100% CLEAR */}
           {mode === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -135,18 +131,18 @@ export function FarmerLogin() {
                   Farmer Code or Mobile Number
                 </label>
                 <div className="relative">
-                  <Hash className="w-4 h-4 text-emerald-700 absolute left-3.5 top-3" />
+                  <Hash className="w-4 h-4 text-emerald-700 absolute left-3.5 top-3.5" />
                   <input
                     type="text"
                     required
                     value={codeOrPhone}
                     onChange={(e) => setCodeOrPhone(e.target.value)}
-                    placeholder="e.g. FMR-2026-001 or 0917-234-5678"
+                    placeholder="Enter Farmer Code (e.g. FMR-2026-001) or Mobile Phone"
                     className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
                   />
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Enter your official Farmer Registration Code or phone number.
+                  Enter your registered Farmer ID or phone number.
                 </p>
               </div>
 
@@ -160,7 +156,7 @@ export function FarmerLogin() {
               </button>
             </form>
           ) : (
-            /* ONLINE SELF-REGISTRATION FORM WITH TYPEABLE EXACT BARANGAY AND MUNICIPALITY */
+            /* ONLINE SELF-REGISTRATION FORM - 100% CLEAR FORM */
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
@@ -171,8 +167,8 @@ export function FarmerLogin() {
                   required
                   value={regData.name}
                   onChange={(e) => setRegData({ ...regData, name: e.target.value })}
-                  placeholder="e.g. Juan Batumbakal"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Enter your full name"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
 
@@ -186,8 +182,8 @@ export function FarmerLogin() {
                     required
                     value={regData.contact}
                     onChange={(e) => setRegData({ ...regData, contact: e.target.value })}
-                    placeholder="0917-000-0000"
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter phone number"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
 
@@ -202,12 +198,13 @@ export function FarmerLogin() {
                     required
                     value={regData.farm_size_ha}
                     onChange={(e) => setRegData({ ...regData, farm_size_ha: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="e.g. 2.0"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
               </div>
 
-              {/* TYPE EXACT BARANGAY AND MUNICIPALITY */}
+              {/* CLEAR EXACT BARANGAY AND MUNICIPALITY */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
@@ -218,8 +215,8 @@ export function FarmerLogin() {
                     required
                     value={regData.barangay}
                     onChange={(e) => setRegData({ ...regData, barangay: e.target.value })}
-                    placeholder="Type exact barangay"
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter exact barangay"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
 
@@ -232,8 +229,8 @@ export function FarmerLogin() {
                     required
                     value={regData.municipality}
                     onChange={(e) => setRegData({ ...regData, municipality: e.target.value })}
-                    placeholder="Type municipality"
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter municipality"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
               </div>
@@ -248,41 +245,6 @@ export function FarmerLogin() {
               </button>
             </form>
           )}
-
-          {/* Quick Demo Access for evaluation */}
-          <div className="pt-4 border-t border-slate-100">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2.5">
-              1-Click Demo Farmer Accounts
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('FMR-2026-001')}
-                className="p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-center transition"
-              >
-                <span className="text-xs font-bold text-emerald-950 block">Batumbakal</span>
-                <span className="text-[10px] text-emerald-700 font-mono">FMR-001</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('FMR-2026-002')}
-                className="p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-center transition"
-              >
-                <span className="text-xs font-bold text-emerald-950 block">Morales</span>
-                <span className="text-[10px] text-emerald-700 font-mono">FMR-002</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('FMR-2026-003')}
-                className="p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-center transition"
-              >
-                <span className="text-xs font-bold text-emerald-950 block">Ramos</span>
-                <span className="text-[10px] text-emerald-700 font-mono">FMR-003</span>
-              </button>
-            </div>
-          </div>
 
           {/* Link to Staff Portal */}
           <div className="text-center pt-2">

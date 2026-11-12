@@ -17,7 +17,7 @@ const KEYS = {
 function getLocal(key, defaultData) {
   try {
     const raw = localStorage.getItem(key);
-    if (!raw) {
+    if (raw === null || raw === undefined) {
       localStorage.setItem(key, JSON.stringify(defaultData));
       return defaultData;
     }
@@ -39,7 +39,7 @@ function setLocal(key, data) {
 export const dataStore = {
   // Farmers
   getFarmers() {
-    return getLocal(KEYS.farmers, INITIAL_FARMERS);
+    return getLocal(KEYS.farmers, []);
   },
   saveFarmers(data) {
     setLocal(KEYS.farmers, data);
@@ -47,7 +47,7 @@ export const dataStore = {
 
   // Crops
   getCrops() {
-    return getLocal(KEYS.crops, INITIAL_CROPS);
+    return getLocal(KEYS.crops, []);
   },
   saveCrops(data) {
     setLocal(KEYS.crops, data);
@@ -63,7 +63,7 @@ export const dataStore = {
 
   // Purchases
   getPurchases() {
-    return getLocal(KEYS.purchases, INITIAL_PURCHASES);
+    return getLocal(KEYS.purchases, []);
   },
   savePurchases(data) {
     setLocal(KEYS.purchases, data);
@@ -71,19 +71,25 @@ export const dataStore = {
 
   // Sales
   getSales() {
-    return getLocal(KEYS.sales, INITIAL_SALES);
+    return getLocal(KEYS.sales, []);
   },
   saveSales(data) {
     setLocal(KEYS.sales, data);
   },
 
-  // Reset to original demo dataset
+  // Clear all farmers and start with a 100% clean directory
+  clearAllFarmers() {
+    localStorage.setItem(KEYS.farmers, JSON.stringify([]));
+    localStorage.setItem(KEYS.crops, JSON.stringify([]));
+    localStorage.setItem(KEYS.purchases, JSON.stringify([]));
+  },
+
+  // Reset to original demo dataset if desired
   resetToDefaults() {
-    localStorage.setItem(KEYS.farmers, JSON.stringify(INITIAL_FARMERS));
-    localStorage.setItem(KEYS.crops, JSON.stringify(INITIAL_CROPS));
+    localStorage.setItem(KEYS.farmers, JSON.stringify([]));
+    localStorage.setItem(KEYS.crops, JSON.stringify([]));
     localStorage.setItem(KEYS.inventory, JSON.stringify(INITIAL_INVENTORY));
-    localStorage.setItem(KEYS.purchases, JSON.stringify(INITIAL_PURCHASES));
-    localStorage.setItem(KEYS.sales, JSON.stringify(INITIAL_SALES));
+    localStorage.setItem(KEYS.purchases, JSON.stringify([]));
+    localStorage.setItem(KEYS.sales, JSON.stringify([]));
   }
 };
-

@@ -28,7 +28,7 @@ export function Sales({ prefilledItem, onClearPrefilledItem }) {
   const [receiptData, setReceiptData] = useState(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
-  // Form
+  // Form - clean clear fields
   const [formData, setFormData] = useState({
     buyer_name: '',
     buyer_type: 'Wholesaler',
@@ -36,8 +36,8 @@ export function Sales({ prefilledItem, onClearPrefilledItem }) {
     inventory_id: '',
     category: 'Rice',
     variety: '',
-    quantity_kg: '500',
-    price_per_kg: '28.00',
+    quantity_kg: '',
+    price_per_kg: '',
     payment_status: 'Paid',
     payment_method: 'Cash',
     storage_location: 'Central Silo 1',
@@ -56,14 +56,14 @@ export function Sales({ prefilledItem, onClearPrefilledItem }) {
 
     if (prefilledItem) {
       setFormData({
-        buyer_name: 'Metro Food Terminal Wholesalers',
+        buyer_name: '',
         buyer_type: 'Wholesaler',
-        buyer_contact: '0917-555-1122',
+        buyer_contact: '',
         inventory_id: prefilledItem.id,
         category: prefilledItem.category,
         variety: prefilledItem.variety,
-        quantity_kg: String(Math.min(500, prefilledItem.current_stock_kg)),
-        price_per_kg: String(prefilledItem.suggested_selling_price || 30),
+        quantity_kg: '',
+        price_per_kg: String(prefilledItem.suggested_selling_price || ''),
         payment_status: 'Paid',
         payment_method: 'Bank Transfer',
         storage_location: prefilledItem.storage_location || 'Central Silo 1',
@@ -79,7 +79,7 @@ export function Sales({ prefilledItem, onClearPrefilledItem }) {
         inventory_id: firstAvailable.id,
         category: firstAvailable.category,
         variety: firstAvailable.variety,
-        price_per_kg: String(firstAvailable.suggested_selling_price || 26),
+        price_per_kg: String(firstAvailable.suggested_selling_price || ''),
         storage_location: firstAvailable.storage_location
       }));
     }
@@ -101,8 +101,8 @@ export function Sales({ prefilledItem, onClearPrefilledItem }) {
       inventory_id: firstAvailable?.id || '',
       category: firstAvailable?.category || 'Rice',
       variety: firstAvailable?.variety || '',
-      quantity_kg: '500',
-      price_per_kg: String(firstAvailable?.suggested_selling_price || 26),
+      quantity_kg: '',
+      price_per_kg: String(firstAvailable?.suggested_selling_price || ''),
       payment_status: 'Paid',
       payment_method: 'Bank Transfer',
       storage_location: firstAvailable?.storage_location || 'Central Silo 1',

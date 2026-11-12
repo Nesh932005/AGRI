@@ -41,16 +41,16 @@ export function FarmerDashboard() {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
-  // Enroll crop form with exact Barangay and Municipality
+  // Enroll crop form with 100% clean, clear fields
   const [enrollForm, setEnrollForm] = useState({
     category: 'Rice',
-    variety: 'NSIC Rc222 (Tubigan 18)',
+    variety: '',
     barangay: '',
-    municipality: 'San Jose',
-    area_ha: '2.0',
+    municipality: '',
+    area_ha: '',
     planting_date: new Date().toISOString().split('T')[0],
     expected_harvest_date: '',
-    estimated_yield_kg: '8000',
+    estimated_yield_kg: '',
     health_status: 'Healthy',
     notes: ''
   });
@@ -89,19 +89,15 @@ export function FarmerDashboard() {
   }, [user]);
 
   const handleOpenEnroll = () => {
-    const today = new Date();
-    const harvest = new Date();
-    harvest.setDate(today.getDate() + 105);
-
     setEnrollForm({
       category: 'Rice',
-      variety: 'NSIC Rc222 (Tubigan 18)',
+      variety: '',
       barangay: user?.barangay || '',
-      municipality: user?.municipality || 'San Jose',
-      area_ha: '2.0',
-      planting_date: today.toISOString().split('T')[0],
-      expected_harvest_date: harvest.toISOString().split('T')[0],
-      estimated_yield_kg: '8500',
+      municipality: user?.municipality || '',
+      area_ha: '',
+      planting_date: new Date().toISOString().split('T')[0],
+      expected_harvest_date: '',
+      estimated_yield_kg: '',
       health_status: 'Healthy',
       notes: ''
     });
