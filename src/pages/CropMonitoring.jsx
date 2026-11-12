@@ -12,6 +12,7 @@ import {
   CheckCircle, 
   Clock,
   ArrowRight,
+  MapPin,
   Sparkles
 } from 'lucide-react';
 import { cropService, CROP_CATEGORIES, GROWTH_STAGES } from '../services/cropService';
@@ -32,11 +33,13 @@ export function CropMonitoring({ onNavigateToPurchase }) {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState(null);
 
-  // Add Form Data
+  // Add Form Data with exact typeable Barangay and Municipality
   const [formData, setFormData] = useState({
     farmer_id: '',
     category: 'Rice',
     variety: '',
+    barangay: '',
+    municipality: 'San Jose',
     area_ha: '2.0',
     planting_date: new Date().toISOString().split('T')[0],
     expected_harvest_date: '',
@@ -55,7 +58,12 @@ export function CropMonitoring({ onNavigateToPurchase }) {
     setCrops(c);
     setFarmers(f);
     if (f.length > 0 && !formData.farmer_id) {
-      setFormData(prev => ({ ...prev, farmer_id: f[0].id }));
+      setFormData(prev => ({ 
+        ...prev, 
+        farmer_id: f[0].id,
+        barangay: f[0].barangay || '',
+        municipality: f[0].municipality || 'San Jose'
+      }));
     }
     setLoading(false);
   };
@@ -64,15 +72,29 @@ export function CropMonitoring({ onNavigateToPurchase }) {
     loadData();
   }, []);
 
+  const handleFarmerSelect = (farmerId) => {
+    const f = farmers.find(item => item.id === farmerId);
+    setFormData(prev => ({
+      ...prev,
+      farmer_id: farmerId,
+      barangay: f?.barangay || '',
+      municipality: f?.municipality || 'San Jose'
+    }));
+  };
+
   const handleOpenAdd = () => {
     const today = new Date();
     const harvestDate = new Date();
     harvestDate.setDate(today.getDate() + 105);
 
+    const firstFarmer = farmers[0];
+
     setFormData({
-      farmer_id: farmers[0]?.id || '',
+      farmer_id: firstFarmer?.id || '',
       category: 'Rice',
       variety: 'NSIC Rc222 (Tubigan 18)',
+      barangay: firstFarmer?.barangay || '',
+      municipality: firstFarmer?.municipality || 'San Jose',
       area_ha: '2.5',
       planting_date: today.toISOString().split('T')[0],
       expected_harvest_date: harvestDate.toISOString().split('T')[0],
@@ -90,7 +112,8 @@ export function CropMonitoring({ onNavigateToPurchase }) {
     await cropService.addCrop({
       ...formData,
       farmer_name: farmer ? farmer.name : 'Unknown Farmer',
-      barangay: farmer ? farmer.barangay : 'San Isidro'
+      barangay: formData.barangay || farmer?.barangay || 'Poblacion',
+      municipality: formData.municipality || farmer?.municipality || 'San Jose'
     });
     setIsAddModalOpen(false);
     loadData();
@@ -113,15 +136,16 @@ export function CropMonitoring({ onNavigateToPurchase }) {
 
   // Filter crops
   const filteredCrops = crops.filter(c => {
+    const q = search.toLowerCase();
     const matchCat = selectedCategory === 'All' || c.category === selectedCategory;
     const matchStage = selectedStage === 'All' || c.growth_stage === selectedStage;
-    const matchSearch = c.variety.toLowerCase().includes(search.toLowerCase()) ||
-                        c.farmer_name?.toLowerCase().includes(search.toLowerCase()) ||
-                        c.barangay?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = c.variety.toLowerCase().includes(q) ||
+                        c.farmer_name?.toLowerCase().includes(q) ||
+                        (c.barangay && c.barangay.toLowerCase().includes(q)) ||
+                        (c.municipality && c.municipality.toLowerCase().includes(q));
     return matchCat && matchStage && matchSearch;
   });
 
-  // Calculate stage progress percentage
   const getStagePercent = (stage) => {
     const index = GROWTH_STAGES.indexOf(stage);
     if (index === -1) return 10;
@@ -203,7 +227,7 @@ export function CropMonitoring({ onNavigateToPurchase }) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search crop variety, farmer name or barangay..."
+            placeholder="Search crop variety, farmer name, exact barangay, or municipality..."
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
           />
         </div>
@@ -259,7 +283,10 @@ export function CropMonitoring({ onNavigateToPurchase }) {
                       <p className="text-xs text-slate-600 font-medium">
                         Farmer: <span className="font-semibold text-emerald-950">{crop.farmer_name}</span>
                       </p>
-                      <p className="text-[11px] text-slate-400">Brgy. {crop.barangay}</p>
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                        <MapPin className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+                        <span>Brgy. {crop.barangay || 'Poblacion'}, {crop.municipality || 'San Jose'}</span>
+                      </div>
                     </div>
 
                     <div className="text-right">
@@ -357,13 +384,13 @@ export function CropMonitoring({ onNavigateToPurchase }) {
             </label>
             <select
               value={formData.farmer_id}
-              onChange={(e) => setFormData({ ...formData, farmer_id: e.target.value })}
+              onChange={(e) => handleFarmerSelect(e.target.value)}
               required
               className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
             >
               {farmers.map(f => (
                 <option key={f.id} value={f.id}>
-                  {f.name} - Brgy. {f.barangay} ({f.farmer_code})
+                  {f.name} — Brgy. {f.barangay || 'Poblacion'}, {f.municipality || 'San Jose'} ({f.farmer_code})
                 </option>
               ))}
             </select>
@@ -395,6 +422,36 @@ export function CropMonitoring({ onNavigateToPurchase }) {
                 value={formData.variety}
                 onChange={(e) => setFormData({ ...formData, variety: e.target.value })}
                 placeholder="e.g. NSIC Rc222 / Sweet Corn"
+                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          {/* EXACT TYPEABLE BARANGAY & MUNICIPALITY */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                Exact Barangay Location *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.barangay}
+                onChange={(e) => setFormData({ ...formData, barangay: e.target.value })}
+                placeholder="Type exact barangay"
+                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                Municipality *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.municipality}
+                onChange={(e) => setFormData({ ...formData, municipality: e.target.value })}
+                placeholder="Type municipality"
                 className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
@@ -559,4 +616,3 @@ export function CropMonitoring({ onNavigateToPurchase }) {
     </div>
   );
 }
-

@@ -23,25 +23,15 @@ export function FarmerLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Self-registration form state for new farmers
+  // Self-registration form state for new farmers with exact typeable Barangay & Municipality
   const [regData, setRegData] = useState({
     name: '',
     contact: '',
-    barangay: 'San Isidro',
+    barangay: '',
+    municipality: 'San Jose',
     farm_size_ha: '2.5',
     primary_crops: ['Rice']
   });
-
-  const barangays = [
-    'San Isidro',
-    'Santa Maria',
-    'San Roque',
-    'Maligaya',
-    'Buenavista',
-    'Poblacion',
-    'San Jose',
-    'Santo Tomas'
-  ];
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -170,7 +160,7 @@ export function FarmerLogin() {
               </button>
             </form>
           ) : (
-            /* ONLINE SELF-REGISTRATION FORM */
+            /* ONLINE SELF-REGISTRATION FORM WITH TYPEABLE EXACT BARANGAY AND MUNICIPALITY */
             <form onSubmit={handleRegister} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
@@ -203,33 +193,49 @@ export function FarmerLogin() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Barangay *
+                    Farm Land Area (ha) *
                   </label>
-                  <select
-                    value={regData.barangay}
-                    onChange={(e) => setRegData({ ...regData, barangay: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
-                  >
-                    {barangays.map(b => (
-                      <option key={b} value={b}>{b}</option>
-                    ))}
-                  </select>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    required
+                    value={regData.farm_size_ha}
+                    onChange={(e) => setRegData({ ...regData, farm_size_ha: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Estimated Farm Land Area (Hectares) *
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0.1"
-                  required
-                  value={regData.farm_size_ha}
-                  onChange={(e) => setRegData({ ...regData, farm_size_ha: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
+              {/* TYPE EXACT BARANGAY AND MUNICIPALITY */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Exact Barangay *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={regData.barangay}
+                    onChange={(e) => setRegData({ ...regData, barangay: e.target.value })}
+                    placeholder="Type exact barangay"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Municipality / City *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={regData.municipality}
+                    onChange={(e) => setRegData({ ...regData, municipality: e.target.value })}
+                    placeholder="Type municipality"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
               </div>
 
               <button
@@ -255,7 +261,7 @@ export function FarmerLogin() {
                 className="p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-center transition"
               >
                 <span className="text-xs font-bold text-emerald-950 block">Batumbakal</span>
-                <span className="text-[10px] text-emerald-700 font-mono">FMR-001 (Rice)</span>
+                <span className="text-[10px] text-emerald-700 font-mono">FMR-001</span>
               </button>
 
               <button
@@ -264,7 +270,7 @@ export function FarmerLogin() {
                 className="p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-center transition"
               >
                 <span className="text-xs font-bold text-emerald-950 block">Morales</span>
-                <span className="text-[10px] text-emerald-700 font-mono">FMR-002 (Corn)</span>
+                <span className="text-[10px] text-emerald-700 font-mono">FMR-002</span>
               </button>
 
               <button
@@ -273,7 +279,7 @@ export function FarmerLogin() {
                 className="p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-center transition"
               >
                 <span className="text-xs font-bold text-emerald-950 block">Ramos</span>
-                <span className="text-[10px] text-emerald-700 font-mono">FMR-003 (Veg)</span>
+                <span className="text-[10px] text-emerald-700 font-mono">FMR-003</span>
               </button>
             </div>
           </div>

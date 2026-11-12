@@ -41,10 +41,12 @@ export function FarmerDashboard() {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
-  // Enroll crop form
+  // Enroll crop form with exact Barangay and Municipality
   const [enrollForm, setEnrollForm] = useState({
     category: 'Rice',
     variety: 'NSIC Rc222 (Tubigan 18)',
+    barangay: '',
+    municipality: 'San Jose',
     area_ha: '2.0',
     planting_date: new Date().toISOString().split('T')[0],
     expected_harvest_date: '',
@@ -94,6 +96,8 @@ export function FarmerDashboard() {
     setEnrollForm({
       category: 'Rice',
       variety: 'NSIC Rc222 (Tubigan 18)',
+      barangay: user?.barangay || '',
+      municipality: user?.municipality || 'San Jose',
       area_ha: '2.0',
       planting_date: today.toISOString().split('T')[0],
       expected_harvest_date: harvest.toISOString().split('T')[0],
@@ -110,7 +114,8 @@ export function FarmerDashboard() {
       ...enrollForm,
       farmer_id: user?.farmer_id || user?.id,
       farmer_name: user?.full_name,
-      barangay: user?.barangay || 'San Isidro',
+      barangay: enrollForm.barangay || user?.barangay || 'Poblacion',
+      municipality: enrollForm.municipality || user?.municipality || 'San Jose',
       growth_stage: 'Vegetative'
     });
     setIsEnrollModalOpen(false);
@@ -166,7 +171,7 @@ export function FarmerDashboard() {
                 AGRI Farmer Connect
               </span>
               <span className="text-[10px] uppercase font-semibold tracking-wider text-emerald-300">
-                Beneficiary Portal • Brgy. {user?.barangay || 'San Isidro'}
+                Beneficiary Portal • Brgy. {user?.barangay || 'San Isidro'}, {user?.municipality || 'San Jose'}
               </span>
             </div>
           </div>
@@ -200,14 +205,17 @@ export function FarmerDashboard() {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-700/60 border border-emerald-500/30 text-emerald-200 text-xs font-semibold">
                 <Sparkles className="w-3.5 h-3.5" />
-                Connected Beneficiary ID: {user?.farmer_code || 'FMR-2026-001'}
+                Beneficiary ID: {user?.farmer_code || 'FMR-2026-001'}
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                 Mabuhay, {user?.full_name}!
               </h1>
-              <p className="text-emerald-100 text-xs sm:text-sm max-w-xl">
-                Here are your active fields, growth progression, and payment vouchers issued by the Municipal Agriculture Office.
-              </p>
+              <div className="flex items-center gap-2 text-emerald-100 text-xs sm:text-sm">
+                <MapPin className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span>Brgy. {user?.barangay || 'Poblacion'}, {user?.municipality || 'San Jose'}</span>
+                <span>•</span>
+                <span>Farm Area: {user?.farm_size_ha || 2.5} ha</span>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
@@ -301,7 +309,12 @@ export function FarmerDashboard() {
                           </Badge>
                         </div>
                         <h3 className="font-bold text-slate-900 text-base">{crop.variety}</h3>
-                        <p className="text-xs text-slate-500 font-mono">Area: {crop.area_ha} hectares</p>
+                        <div className="flex items-center gap-1 text-xs text-slate-500 font-medium mt-0.5">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                          <span>Brgy. {crop.barangay || user?.barangay}, {crop.municipality || user?.municipality}</span>
+                          <span>•</span>
+                          <span className="font-mono">{crop.area_ha} ha</span>
+                        </div>
                       </div>
 
                       <div className="text-right">
@@ -429,7 +442,7 @@ export function FarmerDashboard() {
         </div>
       </main>
 
-      {/* ENROLL FIELD MODAL */}
+      {/* ENROLL FIELD MODAL WITH EXACT TYPEABLE BARANGAY & MUNICIPALITY */}
       <Modal
         isOpen={isEnrollModalOpen}
         onClose={() => setIsEnrollModalOpen(false)}
@@ -461,6 +474,36 @@ export function FarmerDashboard() {
                 value={enrollForm.variety}
                 onChange={(e) => setEnrollForm({ ...enrollForm, variety: e.target.value })}
                 placeholder="e.g. NSIC Rc222 / Sweet Corn"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"
+              />
+            </div>
+          </div>
+
+          {/* EXACT TYPEABLE BARANGAY & MUNICIPALITY */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                Exact Barangay *
+              </label>
+              <input
+                type="text"
+                required
+                value={enrollForm.barangay}
+                onChange={(e) => setEnrollForm({ ...enrollForm, barangay: e.target.value })}
+                placeholder="Type exact barangay"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                Municipality *
+              </label>
+              <input
+                type="text"
+                required
+                value={enrollForm.municipality}
+                onChange={(e) => setEnrollForm({ ...enrollForm, municipality: e.target.value })}
+                placeholder="Type municipality"
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"
               />
             </div>
@@ -570,8 +613,10 @@ export function FarmerDashboard() {
                   <span className="font-mono font-bold text-slate-800">{Number(selectedCropForPickup?.estimated_yield_kg).toLocaleString()} kg</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Barangay:</span>
-                  <span className="font-semibold text-slate-800">Brgy. {user?.barangay || 'San Isidro'}</span>
+                  <span className="text-slate-500">Location:</span>
+                  <span className="font-semibold text-slate-800">
+                    Brgy. {selectedCropForPickup?.barangay || user?.barangay}, {selectedCropForPickup?.municipality || user?.municipality}
+                  </span>
                 </div>
               </div>
 

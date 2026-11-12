@@ -30,7 +30,8 @@ export const cropService = {
       id: `crop-${Date.now()}`,
       farmer_id: cropData.farmer_id,
       farmer_name: cropData.farmer_name || 'Farmer',
-      barangay: cropData.barangay || 'San Isidro',
+      barangay: cropData.barangay ? cropData.barangay.trim() : 'San Isidro',
+      municipality: cropData.municipality ? cropData.municipality.trim() : 'San Jose',
       category: cropData.category || 'Rice',
       variety: cropData.variety,
       area_ha: parseFloat(cropData.area_ha) || 1,
@@ -85,4 +86,3 @@ export const cropService = {
     return true;
   }
 };
-

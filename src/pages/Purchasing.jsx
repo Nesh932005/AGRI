@@ -8,7 +8,8 @@ import {
   FileText, 
   ArrowRight,
   TrendingDown,
-  Warehouse
+  Warehouse,
+  MapPin
 } from 'lucide-react';
 import { transactionService } from '../services/transactionService';
 import { farmerService } from '../services/farmerService';
@@ -55,7 +56,6 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
     setFarmers(f);
     setCrops(c);
 
-    // If navigated from harvest ready crop, pre-fill form
     if (prefilledCrop) {
       setFormData({
         farmer_id: prefilledCrop.farmer_id || '',
@@ -114,7 +114,9 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
     const farmer = farmers.find(f => f.id === formData.farmer_id);
     const recorded = await transactionService.recordPurchase({
       ...formData,
-      farmer_name: farmer ? farmer.name : 'Registered Farmer'
+      farmer_name: farmer ? farmer.name : 'Registered Farmer',
+      barangay: farmer?.barangay || 'Poblacion',
+      municipality: farmer?.municipality || 'San Jose'
     });
 
     setIsPurchaseModalOpen(false);
@@ -134,9 +136,12 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
   const totalProcuredVolume = purchases.reduce((acc, p) => acc + (parseFloat(p.quantity_kg) || 0), 0);
 
   const filteredPurchases = purchases.filter(p => {
-    const matchSearch = p.reference_no.toLowerCase().includes(search.toLowerCase()) ||
-                        p.farmer_name?.toLowerCase().includes(search.toLowerCase()) ||
-                        p.variety.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch = p.reference_no.toLowerCase().includes(q) ||
+                        p.farmer_name?.toLowerCase().includes(q) ||
+                        p.variety.toLowerCase().includes(q) ||
+                        (p.barangay && p.barangay.toLowerCase().includes(q)) ||
+                        (p.municipality && p.municipality.toLowerCase().includes(q));
     return matchSearch;
   });
 
@@ -192,7 +197,7 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search reference #, farmer name or variety..."
+              placeholder="Search reference #, farmer, barangay, or municipality..."
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
@@ -203,7 +208,7 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
               <tr>
                 <th className="px-5 py-3.5 text-left">Reference No.</th>
-                <th className="px-5 py-3.5 text-left">Farmer / Seller</th>
+                <th className="px-5 py-3.5 text-left">Farmer & Location</th>
                 <th className="px-5 py-3.5 text-left">Crop Commodity</th>
                 <th className="px-5 py-3.5 text-right">Quantity</th>
                 <th className="px-5 py-3.5 text-right">Price / kg</th>
@@ -226,8 +231,12 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
                       {p.reference_no}
                       <span className="block text-[11px] text-slate-400 font-sans font-normal">{p.purchase_date}</span>
                     </td>
-                    <td className="px-5 py-4 font-medium text-slate-900 text-xs">
-                      {p.farmer_name}
+                    <td className="px-5 py-4 text-xs">
+                      <p className="font-bold text-slate-900">{p.farmer_name}</p>
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-0.5">
+                        <MapPin className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+                        <span>Brgy. {p.barangay || 'San Isidro'}, {p.municipality || 'San Jose'}</span>
+                      </div>
                     </td>
                     <td className="px-5 py-4 text-xs">
                       <div className="flex items-center gap-1.5">
@@ -288,7 +297,7 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
             >
               {farmers.map(f => (
                 <option key={f.id} value={f.id}>
-                  {f.name} - Brgy. {f.barangay} ({f.farmer_code})
+                  {f.name} — Brgy. {f.barangay || 'Poblacion'}, {f.municipality || 'San Jose'} ({f.farmer_code})
                 </option>
               ))}
             </select>
@@ -439,4 +448,3 @@ export function Purchasing({ prefilledCrop, onClearPrefilledCrop }) {
     </div>
   );
 }
-

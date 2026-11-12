@@ -19,7 +19,8 @@ export const farmerService = {
       farmer_code: `FMR-2026-${String(Math.floor(Math.random() * 900) + 100)}`,
       name: farmer.name,
       contact: farmer.contact,
-      barangay: farmer.barangay,
+      barangay: farmer.barangay?.trim() || 'Poblacion',
+      municipality: farmer.municipality?.trim() || 'San Jose',
       farm_size_ha: parseFloat(farmer.farm_size_ha) || 1,
       primary_crops: farmer.primary_crops || ['Rice'],
       status: farmer.status || 'active',
@@ -53,7 +54,12 @@ export const farmerService = {
     }
 
     const current = dataStore.getFarmers();
-    const updated = current.map(f => f.id === id ? { ...f, ...updates } : f);
+    const updated = current.map(f => f.id === id ? { 
+      ...f, 
+      ...updates,
+      barangay: updates.barangay ? updates.barangay.trim() : f.barangay,
+      municipality: updates.municipality ? updates.municipality.trim() : f.municipality
+    } : f);
     dataStore.saveFarmers(updated);
     return updated.find(f => f.id === id);
   },
@@ -63,9 +69,8 @@ export const farmerService = {
       await supabase.from('farmers').delete().eq('id', id);
     }
     const current = dataStore.getFarmers();
-    const updated = current.filter(f => f.id !== id);
+    const updated = current.filter(c => c.id !== id);
     dataStore.saveFarmers(updated);
     return true;
   }
 };
-

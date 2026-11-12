@@ -12,6 +12,7 @@ import {
   Wheat,
   CheckCircle,
   Eye,
+  Building2,
   AlertCircle
 } from 'lucide-react';
 import { farmerService } from '../services/farmerService';
@@ -24,7 +25,7 @@ export function Farmers() {
   const [farmers, setFarmers] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedCropFilter, setSelectedCropFilter] = useState('All');
-  const [selectedBarangayFilter, setSelectedBarangayFilter] = useState('All');
+  const [municipalityFilter, setMunicipalityFilter] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Modals
@@ -37,22 +38,12 @@ export function Farmers() {
   const [formData, setFormData] = useState({
     name: '',
     contact: '',
-    barangay: 'San Isidro',
+    barangay: '',
+    municipality: '',
     farm_size_ha: '2.5',
     primary_crops: ['Rice'],
     status: 'active'
   });
-
-  const barangays = [
-    'San Isidro',
-    'Santa Maria',
-    'San Roque',
-    'Maligaya',
-    'Buenavista',
-    'Poblacion',
-    'San Jose',
-    'Santo Tomas'
-  ];
 
   const availableCrops = ['Rice', 'Corn', 'Vegetables', 'Fruits'];
 
@@ -71,7 +62,8 @@ export function Farmers() {
     setFormData({
       name: '',
       contact: '',
-      barangay: 'San Isidro',
+      barangay: '',
+      municipality: 'San Jose',
       farm_size_ha: '2.0',
       primary_crops: ['Rice'],
       status: 'active'
@@ -84,7 +76,8 @@ export function Farmers() {
     setFormData({
       name: farmer.name,
       contact: farmer.contact,
-      barangay: farmer.barangay,
+      barangay: farmer.barangay || '',
+      municipality: farmer.municipality || 'San Jose',
       farm_size_ha: String(farmer.farm_size_ha),
       primary_crops: farmer.primary_crops || ['Rice'],
       status: farmer.status || 'active'
@@ -138,21 +131,26 @@ export function Farmers() {
 
   // Filtered farmers
   const filteredFarmers = farmers.filter(f => {
-    const matchSearch = f.name.toLowerCase().includes(search.toLowerCase()) ||
-                        f.farmer_code.toLowerCase().includes(search.toLowerCase()) ||
-                        f.barangay.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch = f.name.toLowerCase().includes(q) ||
+                        f.farmer_code.toLowerCase().includes(q) ||
+                        (f.barangay && f.barangay.toLowerCase().includes(q)) ||
+                        (f.municipality && f.municipality.toLowerCase().includes(q));
     const matchCrop = selectedCropFilter === 'All' || f.primary_crops?.includes(selectedCropFilter);
-    const matchBarangay = selectedBarangayFilter === 'All' || f.barangay === selectedBarangayFilter;
-    return matchSearch && matchCrop && matchBarangay;
+    const matchMuni = !municipalityFilter || 
+                      (f.municipality && f.municipality.toLowerCase().includes(municipalityFilter.toLowerCase())) ||
+                      (f.barangay && f.barangay.toLowerCase().includes(municipalityFilter.toLowerCase()));
+    return matchSearch && matchCrop && matchMuni;
   });
 
   const exportCSV = () => {
-    const headers = ['Farmer Code', 'Name', 'Contact', 'Barangay', 'Farm Size (ha)', 'Primary Crops', 'Status', 'Registered Date'];
+    const headers = ['Farmer Code', 'Name', 'Contact', 'Barangay', 'Municipality', 'Farm Size (ha)', 'Primary Crops', 'Status', 'Registered Date'];
     const rows = filteredFarmers.map(f => [
       f.farmer_code,
       `"${f.name}"`,
       f.contact,
-      `"${f.barangay}"`,
+      `"${f.barangay || ''}"`,
+      `"${f.municipality || ''}"`,
       f.farm_size_ha,
       `"${f.primary_crops?.join(', ')}"`,
       f.status,
@@ -210,7 +208,7 @@ export function Farmers() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, code (e.g. FMR-001) or barangay..."
+              placeholder="Search farmer name, code, exact barangay, or municipality..."
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
             />
           </div>
@@ -230,24 +228,22 @@ export function Farmers() {
             </select>
           </div>
 
-          {/* Barangay Filter */}
-          <div>
-            <select
-              value={selectedBarangayFilter}
-              onChange={(e) => setSelectedBarangayFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700"
-            >
-              <option value="All">All Barangays</option>
-              {barangays.map(b => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
+          {/* Location / Municipality Filter */}
+          <div className="relative">
+            <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <input
+              type="text"
+              value={municipalityFilter}
+              onChange={(e) => setMunicipalityFilter(e.target.value)}
+              placeholder="Filter by Municipality / Brgy..."
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700"
+            />
           </div>
         </div>
 
         {/* Quick Tag Counts */}
         <div className="flex items-center gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <span className="font-semibold text-slate-700">{filteredFarmers.length}</span> farmers found
+          <span className="font-semibold text-slate-700">{filteredFarmers.length}</span> farmers found matching location criteria
         </div>
       </div>
 
@@ -258,7 +254,8 @@ export function Farmers() {
             <thead className="bg-slate-50/70 text-slate-500 text-xs uppercase font-semibold">
               <tr>
                 <th className="px-5 py-3.5 text-left">Farmer</th>
-                <th className="px-5 py-3.5 text-left">Contact & Barangay</th>
+                <th className="px-5 py-3.5 text-left">Exact Location (Barangay & Municipality)</th>
+                <th className="px-5 py-3.5 text-left">Contact</th>
                 <th className="px-5 py-3.5 text-left">Farm Size</th>
                 <th className="px-5 py-3.5 text-left">Primary Crops</th>
                 <th className="px-5 py-3.5 text-center">Status</th>
@@ -268,7 +265,7 @@ export function Farmers() {
             <tbody className="divide-y divide-slate-100 bg-white">
               {filteredFarmers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 text-sm">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500 text-sm">
                     No farmers found matching criteria.
                   </td>
                 </tr>
@@ -289,14 +286,20 @@ export function Farmers() {
 
                     <td className="px-5 py-4">
                       <div className="text-xs space-y-0.5">
-                        <div className="flex items-center gap-1.5 text-slate-700 font-medium">
-                          <Phone className="w-3 h-3 text-slate-400" />
-                          <span>{farmer.contact}</span>
+                        <div className="flex items-center gap-1.5 font-semibold text-slate-900">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                          <span>Brgy. {farmer.barangay || 'Poblacion'}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-500">
-                          <MapPin className="w-3 h-3 text-emerald-600" />
-                          <span>Brgy. {farmer.barangay}</span>
+                        <div className="flex items-center gap-1.5 text-slate-500 pl-5">
+                          <span>{farmer.municipality || 'Municipal Agriculture Office'}</span>
                         </div>
+                      </div>
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1.5 text-slate-700 font-medium text-xs">
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        <span>{farmer.contact}</span>
                       </div>
                     </td>
 
@@ -393,23 +396,6 @@ export function Farmers() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Barangay *
-              </label>
-              <select
-                value={formData.barangay}
-                onChange={(e) => setFormData({ ...formData, barangay: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
-              >
-                {barangays.map(b => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Farm Area (Hectares) *
               </label>
               <input
@@ -422,19 +408,50 @@ export function Farmers() {
                 className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
+          </div>
+
+          {/* EXACT BARANGAY & MUNICIPALITY TEXT INPUTS */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Status
+                Exact Barangay *
               </label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              <input
+                type="text"
+                required
+                value={formData.barangay}
+                onChange={(e) => setFormData({ ...formData, barangay: e.target.value })}
+                placeholder="Type exact barangay (e.g. San Isidro, Poblacion)"
                 className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              />
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                Municipality / City *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.municipality}
+                onChange={(e) => setFormData({ ...formData, municipality: e.target.value })}
+                placeholder="Type municipality (e.g. San Jose, Solano)"
+                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+              Status
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
 
           <div>
@@ -515,23 +532,6 @@ export function Farmers() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Barangay
-              </label>
-              <select
-                value={formData.barangay}
-                onChange={(e) => setFormData({ ...formData, barangay: e.target.value })}
-                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
-              >
-                {barangays.map(b => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Farm Area (Hectares)
               </label>
               <input
@@ -544,19 +544,50 @@ export function Farmers() {
                 className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
+          </div>
+
+          {/* EDIT EXACT BARANGAY & MUNICIPALITY */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Status
+                Exact Barangay *
               </label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              <input
+                type="text"
+                required
+                value={formData.barangay}
+                onChange={(e) => setFormData({ ...formData, barangay: e.target.value })}
+                placeholder="Type exact barangay"
                 className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              />
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                Municipality / City *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.municipality}
+                onChange={(e) => setFormData({ ...formData, municipality: e.target.value })}
+                placeholder="Type municipality"
+                className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+              Status
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
 
           <div>
@@ -626,8 +657,12 @@ export function Farmers() {
 
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-slate-400 block mb-0.5">Location</span>
-                <span className="font-semibold text-slate-800">Brgy. {selectedFarmer.barangay}</span>
+                <span className="text-slate-400 block mb-0.5">Exact Barangay</span>
+                <span className="font-semibold text-slate-900">Brgy. {selectedFarmer.barangay || 'San Isidro'}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span className="text-slate-400 block mb-0.5">Municipality</span>
+                <span className="font-semibold text-slate-900">{selectedFarmer.municipality || 'San Jose'}</span>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-400 block mb-0.5">Contact Number</span>
@@ -636,10 +671,6 @@ export function Farmers() {
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-400 block mb-0.5">Total Farm Size</span>
                 <span className="font-semibold text-slate-800">{selectedFarmer.farm_size_ha} Hectares</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-slate-400 block mb-0.5">Registration Date</span>
-                <span className="font-semibold text-slate-800">{selectedFarmer.registered_at || '2025-01-15'}</span>
               </div>
             </div>
 
@@ -669,4 +700,3 @@ export function Farmers() {
     </div>
   );
 }
-

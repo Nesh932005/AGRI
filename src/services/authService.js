@@ -75,7 +75,7 @@ export const authService = {
     );
 
     if (!matched) {
-      throw new Error(`No farmer registered with Code or Contact "${codeOrPhone}". Please verify your farmer ID or contact the Municipal Agriculture Office.`);
+      throw new Error(`No farmer registered with Code or Contact "${codeOrPhone}". Please verify your farmer ID or register online.`);
     }
 
     const farmerUser = {
@@ -86,7 +86,8 @@ export const authService = {
       email: `${matched.farmer_code.toLowerCase()}@farmer.agri.gov`,
       role: 'farmer',
       contact: matched.contact,
-      barangay: matched.barangay,
+      barangay: matched.barangay || 'San Isidro',
+      municipality: matched.municipality || 'San Jose',
       farm_size_ha: matched.farm_size_ha,
       primary_crops: matched.primary_crops,
       department: 'Registered Farmer Beneficiary'
@@ -115,7 +116,8 @@ export const authService = {
         email: `${demoFarmer.farmer_code.toLowerCase()}@farmer.agri.gov`,
         role: 'farmer',
         contact: demoFarmer.contact,
-        barangay: demoFarmer.barangay,
+        barangay: demoFarmer.barangay || 'San Isidro',
+        municipality: demoFarmer.municipality || 'San Jose',
         farm_size_ha: demoFarmer.farm_size_ha,
         primary_crops: demoFarmer.primary_crops,
         department: 'Registered Farmer Beneficiary'

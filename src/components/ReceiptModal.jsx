@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from './Modal';
-import { Printer, CheckCircle, FileText } from 'lucide-react';
+import { Printer, CheckCircle, FileText, MapPin } from 'lucide-react';
 
 export function ReceiptModal({ isOpen, onClose, data }) {
   if (!data) return null;
@@ -11,6 +11,10 @@ export function ReceiptModal({ isOpen, onClose, data }) {
   const handlePrint = () => {
     window.print();
   };
+
+  const locationDisplay = data.barangay 
+    ? `Brgy. ${data.barangay}, ${data.municipality || 'San Jose'}`
+    : data.municipality || 'Municipal Agriculture Office';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidth="max-w-xl">
@@ -45,14 +49,17 @@ export function ReceiptModal({ isOpen, onClose, data }) {
           </div>
         </div>
 
-        {/* Party Details */}
+        {/* Party Details with Exact Barangay & Municipality */}
         <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200">
           <div>
             <p className="text-xs text-slate-500 font-medium">
               {isSale ? 'Buyer / Entity' : 'Registered Farmer'}
             </p>
             <p className="font-bold text-slate-900">{data.buyer_name || data.farmer_name || 'N/A'}</p>
-            <p className="text-xs text-slate-500">{data.buyer_type || data.barangay || 'San Isidro'}</p>
+            <div className="flex items-center gap-1 text-xs text-slate-600 mt-0.5">
+              <MapPin className="w-3 h-3 text-emerald-700 flex-shrink-0" />
+              <span>{isSale ? (data.buyer_type || 'Commercial Buyer') : locationDisplay}</span>
+            </div>
           </div>
           <div className="text-right">
             <p className="text-xs text-slate-500 font-medium">Payment Method & Status</p>
@@ -136,4 +143,3 @@ export function ReceiptModal({ isOpen, onClose, data }) {
     </Modal>
   );
 }
-
